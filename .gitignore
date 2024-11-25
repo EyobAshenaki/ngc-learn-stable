@@ -6,3 +6,9 @@ __pycache__/
 *.ngc
 *.gmm
 *.results
+
+build
+dist
+ngclearn.egg-info
+*.png
+*.jpg
