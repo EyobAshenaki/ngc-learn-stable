@@ -170,6 +170,8 @@ with tf.device(gpu_tag):
         for i in range(num_iter): # for each training iteration/epoch
             ToD = 0.0
             Lx = 0.0
+            mse = 0.0
+            nll = 0.0
             n_s = 0
             # run single epoch/pass/iteration through dataset
             ####################################################################
@@ -182,6 +184,8 @@ with tf.device(gpu_tag):
                 x_hat = agent.settle(x) # conduct iterative inference
                 ToD_t = calc_ToD(agent) # calc ToD
                 Lx = tf.reduce_sum( metric.bce(x_hat, x) ) + Lx
+                mse = tf.reduce_sum( metric.mse(x_hat, x) ) + mse
+                nll = tf.reduce_sum( metric.cat_nll(x_hat, x) ) + nll
                 # update synaptic parameters given current model internal state
                 delta = agent.calc_updates()
                 opt.apply_gradients(zip(delta, agent.ngc_model.theta))
@@ -197,11 +201,13 @@ with tf.device(gpu_tag):
             print()
             ToD = ToD / (n_s * 1.0)
             Lx = Lx / (n_s * 1.0)
+            mse = mse / (n_s * 1.0)
+            nll = nll / (n_s * 1.0)
             # evaluate generalization ability on dev set
             vToD, vLx = eval_model(agent, dev_set, calc_ToD)
             print("-------------------------------------------------")
-            print("{} | ToD = {}  Lx = {} ; vToD = {}  vLx = {}".format(
-                  i, ToD, Lx, vToD, vLx)
+            print("{} | ToD = {}  Lx = {} ; vToD = {}  vLx = {} ; mse = {} nll = {}".format(
+                  i, ToD, Lx, vToD, vLx, mse, nll)
                   )
             Lx_series.append(Lx)
             ToD_series.append(ToD)
